@@ -1,0 +1,6 @@
+body { font-family: system-ui, sans-serif; margin: 0; }
+.wrap { padding: 24px; max-width: 520px; }
+input, button { width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
+canvas { border: 1px solid #333; margin-top: 12px; touch-action: none; }
+a { color: inherit; }
+.small { font-size: 13px; opacity: 0.8; margin-top: 10px; }
