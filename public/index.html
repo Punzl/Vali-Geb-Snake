@@ -1,43 +1,53 @@
 <!doctype html>
-<html>
+<html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#05060A" />
   <link rel="stylesheet" href="/style.css" />
   <title>Party Snake</title>
 </head>
 <body>
-  <main class="wrap">
-    <h1>Party Snake</h1>
+  <div class="page">
+    <main class="card">
+      <div class="header">
+        <div>
+          <h1 class="h1">Party Snake</h1>
+          <p class="sub">Name eingeben → spielen → Score gespeichert.</p>
+        </div>
+        <span class="badge" id="statusBadge">…</span>
+      </div>
 
-    <input id="name" placeholder="Dein Name" maxlength="32" />
-    <button id="start">Start</button>
+      <div class="col">
+        <input class="input" id="name" placeholder="Dein Name" maxlength="32" autocomplete="name" />
+        <button class="btn primary" id="start">Spielen</button>
+      </div>
 
-    <p><a href="/leaderboard">Leaderboard</a></p>
-
-    <!-- Optional: Reset für Tests -->
-    <button id="reset">Reset (nur Test)</button>
-    <div class="small">Reset löscht nur den "schon gespielt"-Flag in deinem Browser.</div>
-  </main>
+      <div class="notice" id="note" style="display:none;"></div>
+    </main>
+  </div>
 
   <script>
     const input = document.getElementById("name");
-    const btn = document.getElementById("start");
-    const reset = document.getElementById("reset");
+    const start = document.getElementById("start");
+    const statusBadge = document.getElementById("statusBadge");
 
     input.value = localStorage.getItem("playerName") || "";
 
-    btn.onclick = () => {
+    start.onclick = () => {
       const name = input.value.trim();
       if (!name) return;
       localStorage.setItem("playerName", name);
       location.href = "/play";
     };
 
-    reset.onclick = () => {
-      localStorage.removeItem("hasPlayed");
-      alert("Reset: hasPlayed entfernt.");
-    };
+    async function loadStatus(){
+      const st = await fetch("/api/status").then(r=>r.json()).catch(()=>null);
+      if (!st) { statusBadge.textContent = "Status: ?"; return; }
+      statusBadge.textContent = st.leaderboardEnabled ? "Leaderboard: ON" : "Leaderboard: OFF";
+    }
+    loadStatus();
+    setInterval(loadStatus, 8000);
   </script>
 </body>
 </html>

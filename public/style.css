@@ -1,6 +1,299 @@
-body { font-family: system-ui, sans-serif; margin: 0; }
-.wrap { padding: 24px; max-width: 520px; }
-input, button { width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
-canvas { border: 1px solid #333; margin-top: 12px; touch-action: none; }
-a { color: inherit; }
-.small { font-size: 13px; opacity: 0.8; margin-top: 10px; }
+:root{
+  --bg0:#05060A;
+  --bg1:#0B1020;
+
+  --text: rgba(255,255,255,0.92);
+  --muted: rgba(255,255,255,0.70);
+  --line: rgba(255,255,255,0.14);
+
+  --panel: rgba(255,255,255,0.07);
+  --panel2: rgba(255,255,255,0.10);
+
+  --shadow: 0 18px 60px rgba(0,0,0,0.55);
+  --radius: 18px;
+
+  --accentA: rgba(124,255,107,0.20);
+  --accentB: rgba(0,194,255,0.14);
+}
+
+*{ box-sizing:border-box; }
+html, body{ height:100%; }
+body{
+  margin:0;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background:
+    radial-gradient(900px 700px at 20% 10%, rgba(255,77,141,0.18), transparent 55%),
+    radial-gradient(900px 700px at 85% 20%, rgba(0,194,255,0.16), transparent 55%),
+    radial-gradient(1000px 800px at 50% 85%, rgba(255,183,3,0.14), transparent 60%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+  overflow-x:hidden;
+}
+
+a{ color: inherit; opacity: 0.9; }
+a:active{ opacity: 0.7; }
+
+/* ===== Shared layout for Start + Leaderboard ===== */
+.page{
+  position:relative;
+  min-height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 14px;
+}
+
+.card{
+  width: min(560px, 100%);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(10,12,18,0.86);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  backdrop-filter: blur(10px);
+}
+
+.header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.h1{
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.sub{
+  margin: 8px 0 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.08);
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.col{ display:flex; flex-direction:column; gap: 10px; }
+.row{ display:flex; gap: 10px; margin-top: 12px; }
+
+.input{
+  width: 100%;
+  padding: 14px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  outline: none;
+  font-size: 16px;
+}
+.input::placeholder{ color: rgba(255,255,255,0.45); }
+.input:focus{
+  border-color: rgba(255,255,255,0.26);
+  background: rgba(255,255,255,0.08);
+}
+
+.btn{
+  width: 100%;
+  height: 54px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 900;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active{ transform: translateY(1px); opacity: 0.92; }
+
+.btn.primary{
+  background: linear-gradient(180deg, var(--accentA), var(--accentB));
+}
+
+.btn.secondary{
+  background: rgba(255,255,255,0.06);
+  font-weight: 850;
+}
+
+.notice{
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+/* Leaderboard list */
+.list{
+  margin: 12px 0 0 0;
+  padding: 0;
+  list-style: none;
+  display:flex;
+  flex-direction:column;
+  gap: 8px;
+}
+
+.item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+}
+
+.rank{
+  width: 34px;
+  text-align:center;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.name{
+  flex:1;
+  font-weight: 900;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.score{
+  font-variant-numeric: tabular-nums;
+  font-weight: 950;
+}
+
+/* ===== Game-only layout ===== */
+.shell{
+  width:min(520px, 100%);
+}
+
+.canvasWrap{
+  display:flex;
+  justify-content:center;
+}
+
+canvas{
+  width: 100%;
+  height: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.22);
+  touch-action: none;
+  box-shadow: var(--shadow);
+}
+
+.controlsBottom{
+  margin-top: 14px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.bigBtn{
+  height: 92px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 950;
+  letter-spacing: -0.01em;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+}
+.bigBtn:active{ transform: translateY(1px); opacity: 0.92; }
+
+.hint{
+  margin-top: 10px;
+  text-align:center;
+  color: var(--muted);
+  font-size: 13px;
+  min-height: 18px;
+}
+
+/* Ready overlay */
+.overlay{
+  position: fixed;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 18px;
+  background: rgba(0,0,0,0.62);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+}
+
+.modal{
+  width: min(520px, 100%);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(10,12,18,0.88);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.modalTitle{
+  margin: 0;
+  font-size: 22px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+
+.modalSub{
+  margin: 10px 0 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.readyBtn{
+  margin-top: 14px;
+  width: 100%;
+  height: 58px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: linear-gradient(180deg, var(--accentA), var(--accentB));
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 950;
+  cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.readyBtn:active{ transform: translateY(1px); opacity: 0.92; }
+
+/* iOS: keine Doppel-Tap Zoom / keine Scroll-Gesten in der Game-View */
+html, body { height: 100%; }
+body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
+
+.bigBtn, button, canvas {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* iOS Safari: touch-action wird nicht immer voll respektiert, hilft aber wo unterstützt */
+canvas { touch-action: none; }
+.bigBtn { touch-action: manipulation; }

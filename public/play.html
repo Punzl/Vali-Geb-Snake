@@ -1,18 +1,34 @@
 <!doctype html>
-<html>
+<html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no" />
+  <meta name="theme-color" content="#05060A" />
   <link rel="stylesheet" href="/style.css" />
-  <title>Play</title>
+  <title>Snake</title>
 </head>
 <body>
-  <main class="wrap">
-    <h1>Snake</h1>
-    <div id="hud"></div>
-    <canvas id="c" width="400" height="400"></canvas>
-    <p><a href="/">Zurück</a> · <a href="/leaderboard">Leaderboard</a></p>
-  </main>
+  <!-- READY OVERLAY -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h1 class="modalTitle">Bereit?</h1>
+      <p class="modalSub">
+        Steuerung: Wischen ↑ ↓ ← →. Nach Game Over wird dein Score gespeichert.
+      </p>
+      <button class="readyBtn" id="ready">READY</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="shell">
+      <div class="canvasWrap">
+        <canvas id="c"></canvas>
+      </div>
+
+      <div class="hint" id="hint"></div>
+    </div>
+  </div>
 
   <script src="/game.js"></script>
 </body>
