@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json({ limit: "16kb" }));
 app.use(express.static(path.join(__dirname, "public"), { extensions: ["html"] }));
 
-// ---------- Reveal Time (22:30 Wien via ENV recommended) ----------
+// ---------- Reveal Time ----------
 function getPartyStart() {
   const iso = process.env.PARTY_START_ISO;
   if (iso) {
@@ -14,31 +14,43 @@ function getPartyStart() {
     if (!Number.isNaN(d.getTime())) return d;
   }
   const d = new Date();
-  d.setHours(22, 30, 0, 0); // fallback (server local time)
+  d.setHours(22, 30, 0, 0);
   return d;
 }
 const PARTY_START = getPartyStart();
-const PREFIX = process.env.KV_PREFIX || "valigebsnake";
-
 function leaderboardEnabledNow() {
   return Date.now() >= PARTY_START.getTime();
 }
 
-// ---------- Upstash Redis ----------
-const hasRedisEnv =
-  !!process.env.UPSTASH_REDIS_REST_URL && !!process.env.UPSTASH_REDIS_REST_TOKEN;
+// ---------- Find Upstash REST envs (supports prefixed vars like valigebsnake_KV_REST_API_URL) ----------
+function findEnvEnding(suffix) {
+  // prefer exact names if they exist
+  if (process.env[suffix]) return process.env[suffix];
 
-const redis = hasRedisEnv
-  ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    })
-  : null;
+  // otherwise find any env var that ends with suffix
+  const keys = Object.keys(process.env);
+  const k = keys.find((x) => x.endsWith(suffix));
+  return k ? process.env[k] : undefined;
+}
 
-const KEY_BEST = `${PREFIX}:bestByName`;    // hash: name -> bestScore
-const KEY_ZSET = `${PREFIX}:leaderboard`;   // zset: member=name score=bestScore
+// Your screenshot shows: valigebsnake_KV_REST_API_URL / valigebsnake_KV_REST_API_TOKEN
+const redisUrl =
+  process.env.UPSTASH_REDIS_REST_URL ||
+  findEnvEnding("_KV_REST_API_URL") ||
+  process.env.KV_REST_API_URL;
 
-// Local fallback (nur falls Redis env fehlt)
+const redisToken =
+  process.env.UPSTASH_REDIS_REST_TOKEN ||
+  findEnvEnding("_KV_REST_API_TOKEN") ||
+  process.env.KV_REST_API_TOKEN;
+
+const PREFIX = process.env.KV_PREFIX || "valigebsnake";
+const KEY_BEST = `${PREFIX}:bestByName`;
+const KEY_ZSET = `${PREFIX}:leaderboard`;
+
+const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
+
+// Local fallback (wenn Redis nicht gefunden wird)
 let memBest = new Map();
 let memRows = [];
 
@@ -49,14 +61,12 @@ async function upsertScore(name, score) {
 
     if (prevNum === null || !Number.isFinite(prevNum) || score > prevNum) {
       await redis.hset(KEY_BEST, { [name]: score });
-      // zadd: member=name, score=score
       await redis.zadd(KEY_ZSET, { score, member: name });
       return score;
     }
     return prevNum;
   }
 
-  // memory fallback
   const prev = memBest.get(name);
   if (prev === undefined || score > prev) {
     memBest.set(name, score);
@@ -69,9 +79,7 @@ async function upsertScore(name, score) {
 
 async function getTop(n) {
   if (redis) {
-    // zrange withScores, rev=true for descending
     const entries = await redis.zrange(KEY_ZSET, 0, n - 1, { rev: true, withScores: true });
-    // entries: [{ member, score }, ...]
     return (entries || []).map((e) => ({ name: e.member, score: e.score }));
   }
   return memRows.slice(0, n).map((r) => ({ name: r.name, score: r.score }));
@@ -85,11 +93,13 @@ app.get("/api/status", (req, res) => {
     serverNow: new Date().toISOString(),
     storage: redis ? "upstash-redis" : "memory",
     prefix: PREFIX,
+    detectedRedisUrl: !!redisUrl,
+    detectedRedisToken: !!redisToken,
   });
 });
 
 app.post("/api/submit-score", async (req, res) => {
-  // Nach Reveal keine neuen Scores mehr
+  // nach Reveal keine neuen Scores
   if (leaderboardEnabledNow()) {
     return res.status(403).json({ error: "Game closed (leaderboard revealed)" });
   }
